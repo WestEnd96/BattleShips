@@ -6,7 +6,7 @@ import ch.aplu.jgamegrid.*;
 import java.awt.*;
 import ch.aplu.util.*;
 import ch.aplu.bluetooth.*;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 public class BattleshipApp extends GameGrid
   implements GGMouseListener, GGExitListener, BtPeerListener
@@ -48,7 +48,8 @@ public class BattleshipApp extends GameGrid
 
     show();
     doRun();
-    String eingabe = JOptionPane.showInputDialog(null, "Analyse", "");
+    
+   
     StatusDialog status = new StatusDialog(ulx, uly, true);
     status.setText("Deploy your fleet now!\n" +
       "Use the red marker to drag the ship.\n" +
@@ -57,13 +58,15 @@ public class BattleshipApp extends GameGrid
     Monitor.putSleep();  // Wait for dialog to be closed
     status.dispose();
 
+    String eingabe = JOptionPane.showInputDialog("test");
+    
     for (int i = 0; i < fleet.length; i++)
     {
       fleet[i].show(0);
       fleet[i].setMouseEnabled(false);
     }
 
-    //connect();  // Blocks until connected
+    connect();  // Blocks until connected
     addExitListener(this);
     addMouseListener(this, GGMouse.lPress);
   }
@@ -143,30 +146,36 @@ public class BattleshipApp extends GameGrid
 
   public void receiveDataBlock(int[] data)
   {
-    if (isMyMove)
-    {
-      markLocation(data[0]);
-      if (!isOver)
-      {
-        isMyMove = false;
-        setTitle(msgYourMove);
-      }
-    }
-    else
-    {
-      Location loc = new Location(data[0], data[1]);
-      int[] reply =
-      {
-        createReply(loc)
-      };
-      bp.sendDataBlock(reply);
-      if (!isOver)
-      {
-        isMyMove = true;
-        setTitle(msgMyMove);
-        setMouseEnabled(true);
-      }
-    }
+	  if(data[2] == 1) {
+		  //CONTINUE VOKABELSPIEL
+	  }
+	  else 
+	  {
+		  if (isMyMove)
+		    {
+		      markLocation(data[0]);
+		      if (!isOver)
+		      {
+		        isMyMove = false;
+		        setTitle(msgYourMove);
+		      }
+		    }
+		    else
+		    {
+		      Location loc = new Location(data[0], data[1]);
+		      int[] reply =
+		      {
+		        createReply(loc)
+		      };
+		      bp.sendDataBlock(reply);
+		      if (!isOver)
+		      {
+		        isMyMove = true;
+		        setTitle(msgMyMove);
+		        setMouseEnabled(true);
+		      }
+		    }
+	  }
   }
 
   private int createReply(Location loc)
@@ -195,7 +204,7 @@ public class BattleshipApp extends GameGrid
 
   public boolean notifyExit()
   {
-    bp.releaseConnection();
+    //bp.releaseConnection();
     return true;
   }
 
