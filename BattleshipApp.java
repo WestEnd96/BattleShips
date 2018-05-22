@@ -19,6 +19,7 @@ public class BattleshipApp extends GameGrid
   private Location currentLoc;
   private final String serviceName = "Battleship";
   private BluetoothPeer bp;
+  private Vokabelspiel vgame;
 
   public BattleshipApp()
   {
@@ -30,6 +31,8 @@ public class BattleshipApp extends GameGrid
     setBgColor(Color.blue);
     setSimulationPeriod(50);
 
+    vgame = new Vokabelspiel("lang1.xml");
+    
     Ship[] fleet =
     {
       new Carrier(),
@@ -45,11 +48,9 @@ public class BattleshipApp extends GameGrid
       addMouseListener(fleet[i], GGMouse.lPress | GGMouse.lDrag | GGMouse.lRelease);
       addKeyListener(fleet[i]);
     }
-
     show();
     doRun();
     
-   
     StatusDialog status = new StatusDialog(ulx, uly, true);
     status.setText("Deploy your fleet now!\n" +
       "Use the red marker to drag the ship.\n" +
@@ -58,8 +59,6 @@ public class BattleshipApp extends GameGrid
     Monitor.putSleep();  // Wait for dialog to be closed
     status.dispose();
 
-    String eingabe = JOptionPane.showInputDialog("test");
-    
     for (int i = 0; i < fleet.length; i++)
     {
       fleet[i].show(0);

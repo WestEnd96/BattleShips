@@ -8,49 +8,37 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter; 
 
-class Vokabelspiel extends BattleshipApp
+class Vokabelspiel
 {
-List Wörter ;
-	
-public Vokabelspiel() {
+private Wörter[] wortListe;
+private int difficulty;
 
+public Vokabelspiel(String filename) {
     Document doc = null;
-
-    File f = new File("xml_file.xml");
+    File f = new File(filename);
+    
+    if(!f.exists()) { 
+    	System.out.print("File not found !");
+    	System.exit(0);
+    }
 
     try {
         // Das Dokument erstellen
         SAXBuilder builder = new SAXBuilder();
         doc = builder.build(f);
-        XMLOutputter fmt = new XMLOutputter();
-
-        // komplettes Dokument ausgeben
-        fmt.output(doc, System.out);
-
-        // Wurzelelement ausgeben
-        Element element = doc.getRootElement();
-        System.out.println("\nWurzelelement: " + element);
-
-        // Eine Liste aller direkten Kindelemente eines Elementes erstellen
-        List alleKinder = (List) element.getChildren();
-        System.out.println("Erstes Kindelement: "
-                + ((Element) alleKinder.get(0)).getName());
-
-        // Eine Liste aller direkten Kindelemente eines benannten
-        // Elementes erstellen
-        List benannteKinder = element.getChildren("Strasse");
-
-        // Das erste Kindelement ausgeben
-        System.out.println("benanntes Kindelement: "
-                + ((Element) benannteKinder.get(0)).getName());
-
-        // Wert eines bestimmten Elementes ausgeben
-        Element kind = element.getChild("Nachname");
-        System.out.println("Nachname: " + kind.getValue());
-
-        // Attribut ausgeben
-        Element kind2 = element.getChild("Ort");
-        System.out.println("Ortsname: " + kind2.getAttributeValue("name"));
+        //XMLOutputter fmt = new XMLOutputter()
+        //Wurzelelement ausgeben
+        Element root = doc.getRootElement();
+        int levelCount  = root.getChildren().size();
+        wortListe = new Wörter[levelCount];
+        
+        for(int i=0;i<levelCount;i++) {
+        	String name = "Level"+(i+1);
+        	
+        	List<Element> LISTE = root.getChild(name).getChildren();
+        	wortListe[i] = new Wörter(LISTE);
+        }
+        
         
     } catch (JDOMException e) {
         e.printStackTrace();
@@ -58,4 +46,10 @@ public Vokabelspiel() {
         e.printStackTrace();
     }
 } 
+private void setDifficulty(int diff) {
+	difficulty = diff;
+}
+public int getDifficulty() {
+	return this.difficulty;
+}
 }
