@@ -8,15 +8,30 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter; 
 
-class Vokabelspiel
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import ch.aplu.util.*;
+import java.math.*;
+import java.text.SimpleDateFormat;
+
+class Vokabelspiel implements ActionListener
 {
 private Wörter[] wortListe;
 private int difficulty;
+private JDialog fenster;
+private JButton knopf;
+private JLabel anzeigetext;
+private JTextField eingabe;
+public static boolean Go;
+private Timer timer;
+private long startTime = -1;
+private long duration = 5000;
 
-public Vokabelspiel(String filename) {
+public Vokabelspiel(String filename){
     Document doc = null;
     File f = new File(filename);
-    
+  
     if(!f.exists()) { 
     	System.out.print("File not found !");
     	System.exit(0);
@@ -46,10 +61,71 @@ public Vokabelspiel(String filename) {
         e.printStackTrace();
     }
 } 
+public int play() {
+	if(Vokabelspiel.Go) {
+		fenster = new JDialog();
+		   fenster.setTitle("COUNTDOWN");
+		    // Breite und Höhe des Fensters werden 
+		    // auf 200 Pixel gesetzt
+		   fenster.setSize(200,200);
+		    // Dialog wird auf modal gesetzt
+		   fenster.setModal(true);
+		    // Wir lassen unseren Dialog anzeigen
+		   fenster.setVisible(true);   
+	}
+	
+	 fenster = new JDialog();
+	 knopf = new JButton("Done");
+	 anzeigetext = new JLabel();
+	 knopf.setSize(50,50);
+	    fenster.setTitle("1 vs 1 Vokabelspiel");
+	    // Breite und Höhe des Fensters werden 
+	    // auf 200 Pixel gesetzt
+	   fenster.setSize(350,350);
+	    // Dialog wird auf modal gesetzt
+	   fenster.setModal(true);
+	    // Wir lassen unseren Dialog anzeigen
+	   fenster.add(knopf);
+	   
+	   
+	   timer = new Timer(10, this);
+	   timer.setInitialDelay(0);
+	   fenster.add(anzeigetext);
+	   fenster.setVisible(true);  
+	   //String antwort = JOptionPane.showInputDialog(null, getRandomWort(), "");
+	    return 0;
+}
+private String getRandomWort() {
+	int random = (int) (wortListe[difficulty].getWortanzahl()*Math.random());
+	return wortListe[difficulty].getWort(random);
+}
+	   
 private void setDifficulty(int diff) {
 	difficulty = diff;
 }
 public int getDifficulty() {
 	return this.difficulty;
+}
+@Override
+public void actionPerformed(ActionEvent e) {
+	// TODO Auto-generated method stub
+	if(e.getSource() == knopf){
+		if (startTime < 0) {
+            startTime = System.currentTimeMillis();
+        }
+        long now = System.currentTimeMillis();
+        long clockTime = now - startTime;
+        if (clockTime >= duration) {
+            clockTime = duration;
+            timer.stop();
+        }
+        SimpleDateFormat df = new SimpleDateFormat("mm:ss:SSS");
+        anzeigetext.setText(df.format(duration - clockTime));
+        
+		if (!timer.isRunning()) {
+            startTime = -1;
+            timer.start();
+        }
+	}
 }
 }

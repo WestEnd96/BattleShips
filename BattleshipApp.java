@@ -7,9 +7,12 @@ import java.awt.*;
 import ch.aplu.util.*;
 import ch.aplu.bluetooth.*;
 import javax.swing.*;
+import javax.xml.crypto.Data;
+
+import java.awt.event.*;
 
 public class BattleshipApp extends GameGrid
-  implements GGMouseListener, GGExitListener, BtPeerListener
+  implements GGMouseListener, GGExitListener, BtPeerListener, ActionListener
 {
   private final static String title = "JGameGrid Battleship V2.0";
   protected volatile boolean isMyMove;
@@ -20,6 +23,8 @@ public class BattleshipApp extends GameGrid
   private final String serviceName = "Battleship";
   private BluetoothPeer bp;
   private Vokabelspiel vgame;
+  private JDialog fenster;
+  private JButton knopf;
 
   public BattleshipApp()
   {
@@ -64,12 +69,32 @@ public class BattleshipApp extends GameGrid
       fleet[i].show(0);
       fleet[i].setMouseEnabled(false);
     }
-
+    //getReady();
+    vgame.play();
     connect();  // Blocks until connected
     addExitListener(this);
     addMouseListener(this, GGMouse.lPress);
   }
 
+  public void actionPerformed(ActionEvent e) {
+	  int i[] = new int[1];
+	  
+	  if(e.getSource() == knopf){
+		  if(Vokabelspiel.Go) {
+			  i[0] = 2;
+			  bp.sendDataBlock(i);
+			  i[0] = vgame.play();
+			  bp.sendDataBlock(i);
+		  }
+		  else {
+		  i[0] = 1;
+          knopf.setText("Warte auf Ready-up");
+          Vokabelspiel.Go = true;
+          bp.sendDataBlock(i);
+		  }
+      } 
+	}
+  
   public boolean mouseEvent(GGMouse mouse)
   {
     setMouseEnabled(false);
@@ -142,12 +167,40 @@ public class BattleshipApp extends GameGrid
       setMouseEnabled(false);
     }
   }
-
+  
+  public void getReady() {
+		 fenster = new JDialog();
+		 knopf = new JButton("Ready ?");
+		 knopf.setSize(100,100);
+		    
+		    fenster.setTitle("1 vs 1 Vokabelspiel");
+		    // Breite und Höhe des Fensters werden 
+		    // auf 200 Pixel gesetzt
+		   fenster.setSize(200,200);
+		    // Dialog wird auf modal gesetzt
+		   fenster.setModal(true);
+		    // Wir lassen unseren Dialog anzeigen
+		   fenster.add(knopf);
+		   //knopf.addActionListener(this);
+		   fenster.setVisible(true);   
+  }
+  
   public void receiveDataBlock(int[] data)
   {
-	  if(data[2] == 1) {
-		  //CONTINUE VOKABELSPIEL
-	  }
+	  if(data.length == 1) {
+		  switch(data[0]) {
+		  case 1:
+			Vokabelspiel.Go = true;
+		  	getReady();
+		  	break;
+		  case 2: 
+			  data[0] = vgame.play();
+			  bp.sendDataBlock(data);
+			  break;
+		  case 3: 
+			  break;
+		  }
+		  }
 	  else 
 	  {
 		  if (isMyMove)
@@ -211,4 +264,5 @@ public class BattleshipApp extends GameGrid
   {
     new BattleshipApp();
   }
+
 }
