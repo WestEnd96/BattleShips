@@ -19,6 +19,7 @@ class Vokabelspiel implements ActionListener
 {
 private Wörter[] wortListe;
 private int difficulty;
+private int wortWahl;
 private JDialog fenster;
 private JButton knopf;
 private JLabel anzeigetext;
@@ -73,7 +74,7 @@ public int play() {
 		    // Wir lassen unseren Dialog anzeigen
 		   fenster.setVisible(true);   
 	}
-	
+	String antwort;
 	 fenster = new JDialog();
 	 knopf = new JButton("Done");
 	 anzeigetext = new JLabel();
@@ -92,19 +93,32 @@ public int play() {
 	   timer.setInitialDelay(0);
 	   fenster.add(anzeigetext);
 	   fenster.setVisible(true);  
-	   //String antwort = JOptionPane.showInputDialog(null, getRandomWort(), "");
+	   do 
+	   {
+		   antwort = JOptionPane.showInputDialog(null, getRandomWort(), "");
+	   } while(!this.getResult(antwort));
 	    return 0;
 }
 private String getRandomWort() {
 	int random = (int) (wortListe[difficulty].getWortanzahl()*Math.random());
+	setWortwahl(random);
 	return wortListe[difficulty].getWort(random);
 }
 	   
+private boolean getResult(String antwort) {
+	return wortListe[getDifficulty()].Verify(antwort, getWortwahl());
+}
 private void setDifficulty(int diff) {
 	difficulty = diff;
 }
 public int getDifficulty() {
 	return this.difficulty;
+}
+private void setWortwahl(int wort) {
+	wortWahl = wort;
+}
+public int getWortwahl() {
+	return this.wortWahl;
 }
 @Override
 public void actionPerformed(ActionEvent e) {
