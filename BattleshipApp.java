@@ -19,6 +19,7 @@ public class BattleshipApp extends GameGrid
   protected String msgMyMove = "Click a cell to fire";
   protected String msgYourMove = "Please wait enemy bomb";
   protected volatile boolean isOver = false;
+  public final int ulx,uly;
   private Location currentLoc;
   private final String serviceName = "Battleship";
   private BluetoothPeer bp;
@@ -30,13 +31,13 @@ public class BattleshipApp extends GameGrid
   {
     super(10, 10, 25, Color.black, null, false, 4);  // Only 4 rotated sprites
     Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-    final int ulx = (dim.width - getWidth()) / 2 - 400;
-    final int uly = (dim.height - getHeight()) / 2;
+    ulx = (dim.width - getWidth()) / 2 - 200;
+    uly = (dim.height - getHeight()) / 2;
     setTitle(title);
     setBgColor(Color.blue);
     setSimulationPeriod(50);
 
-    vgame = new Vokabelspiel("lang1.xml");
+    vgame = new Vokabelspiel("lang1.xml",ulx,uly);
     
     Ship[] fleet =
     {
@@ -69,28 +70,33 @@ public class BattleshipApp extends GameGrid
       fleet[i].show(0);
       fleet[i].setMouseEnabled(false);
     }
-    //getReady();
-    vgame.play();
-    connect();  // Blocks until connected
+    //int[] data = new int[1];
+    //data[0] = 3;
+    //receiveDataBlock(data);
+    getReady();
+    //Vokabelspiel.Go = true;
+    //vgame.play();
+    //connect();  // Blocks until connected
     addExitListener(this);
     addMouseListener(this, GGMouse.lPress);
   }
 
   public void actionPerformed(ActionEvent e) {
-	  int i[] = new int[1];
+	  int data[] = new int[1];
 	  
 	  if(e.getSource() == knopf){
 		  if(Vokabelspiel.Go) {
-			  i[0] = 2;
-			  bp.sendDataBlock(i);
-			  i[0] = vgame.play();
-			  bp.sendDataBlock(i);
+			  data[0] = 2;
+			  //bp.sendDataBlock(data);
+			  fenster.dispose();
+			  data[0] = vgame.play();
+			  //bp.sendDataBlock(data);
 		  }
 		  else {
-		  i[0] = 1;
+		  data[0] = 1;
           knopf.setText("Warte auf Ready-up");
           Vokabelspiel.Go = true;
-          bp.sendDataBlock(i);
+          //bp.sendDataBlock(data);
 		  }
       } 
 	}
@@ -149,6 +155,7 @@ public class BattleshipApp extends GameGrid
     {
       setTitle("Connect OK. You shoot now");
       isMyMove = true;  // Client has first move
+      getReady();
     }
     else
       setTitle("Waiting as server " + BluetoothFinder.getLocalBluetoothName());
@@ -169,22 +176,19 @@ public class BattleshipApp extends GameGrid
   }
   
   public void getReady() {
+
 		 fenster = new JDialog();
 		 knopf = new JButton("Ready ?");
 		 knopf.setSize(100,100);
-		    
-		    fenster.setTitle("1 vs 1 Vokabelspiel");
-		    // Breite und Höhe des Fensters werden 
-		    // auf 200 Pixel gesetzt
-		   fenster.setSize(200,200);
-		    // Dialog wird auf modal gesetzt
-		   fenster.setModal(true);
-		    // Wir lassen unseren Dialog anzeigen
-		   fenster.add(knopf);
-		   //knopf.addActionListener(this);
-		   fenster.setVisible(true);   
+		 knopf.addActionListener(this);
+		 fenster.setLocation(ulx, uly);
+		 fenster.setTitle("1 vs 1 Vokabelspiel");
+		 fenster.setSize(200,200);
+		 fenster.setModal(true);
+		 fenster.add(knopf);
+		 fenster.setVisible(true);   
   }
-  
+ 
   public void receiveDataBlock(int[] data)
   {
 	  if(data.length == 1) {
@@ -194,13 +198,21 @@ public class BattleshipApp extends GameGrid
 		  	getReady();
 		  	break;
 		  case 2: 
+			  fenster.dispose();
 			  data[0] = vgame.play();
 			  bp.sendDataBlock(data);
 			  break;
 		  case 3: 
+			  StatusDialog win = new StatusDialog(ulx, uly, true);
+			  win.setText("Sie haben gewonnen ! Hier ihr Preis ! ", true);
+			  Monitor.putSleep();
+			  win.dispose();  
+			  break;
+		  case 10:
+			  //bp.sendDataBlock(kamikazeCliked());
 			  break;
 		  }
-		  }
+	  }
 	  else 
 	  {
 		  if (isMyMove)

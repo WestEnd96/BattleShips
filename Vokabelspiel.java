@@ -23,16 +23,19 @@ private int wortWahl;
 private JDialog fenster;
 private JButton knopf;
 private JLabel anzeigetext;
-private JTextField eingabe;
 public static boolean Go;
 private Timer timer;
 private long startTime = -1;
-private long duration = 5000;
+private long duration = 3000;
+public final int ulx,uly;
 
-public Vokabelspiel(String filename){
+public Vokabelspiel(String filename,int x, int y){
     Document doc = null;
     File f = new File(filename);
   
+    ulx = x;
+    uly = y;
+    
     if(!f.exists()) { 
     	System.out.print("File not found !");
     	System.exit(0);
@@ -65,39 +68,36 @@ public Vokabelspiel(String filename){
 public int play() {
 	if(Vokabelspiel.Go) {
 		fenster = new JDialog();
-		   fenster.setTitle("COUNTDOWN");
-		    // Breite und Höhe des Fensters werden 
-		    // auf 200 Pixel gesetzt
-		   fenster.setSize(200,200);
-		    // Dialog wird auf modal gesetzt
-		   fenster.setModal(true);
-		    // Wir lassen unseren Dialog anzeigen
-		   fenster.setVisible(true);   
+		fenster.setTitle("COUNTDOWN");
+		fenster.setSize(200,200);
+		fenster.setModal(true);
+		fenster.setLocation(ulx, uly);
+		anzeigetext = new JLabel();
+		anzeigetext.setText("Timer");
+		timer = new Timer(10, this);
+		timer.setInitialDelay(0);
+		startTimer();
+		fenster.add(anzeigetext);
+		fenster.pack();
+		fenster.setVisible(true);   
+		Vokabelspiel.Go = false;
 	}
 	String antwort;
-	 fenster = new JDialog();
-	 knopf = new JButton("Done");
-	 anzeigetext = new JLabel();
-	 knopf.setSize(50,50);
-	    fenster.setTitle("1 vs 1 Vokabelspiel");
-	    // Breite und Höhe des Fensters werden 
-	    // auf 200 Pixel gesetzt
-	   fenster.setSize(350,350);
-	    // Dialog wird auf modal gesetzt
-	   fenster.setModal(true);
-	    // Wir lassen unseren Dialog anzeigen
-	   fenster.add(knopf);
-	   
-	   
-	   timer = new Timer(10, this);
-	   timer.setInitialDelay(0);
-	   fenster.add(anzeigetext);
-	   fenster.setVisible(true);  
-	   do 
-	   {
-		   antwort = JOptionPane.showInputDialog(null, getRandomWort(), "");
-	   } while(!this.getResult(antwort));
-	    return 0;
+	
+	timer = new Timer(10, this);
+	timer.setInitialDelay(0);
+	
+    startTimer();
+    fenster.setModal(false);
+    fenster.setVisible(true); 
+	do 
+	{
+	antwort = JOptionPane.showInputDialog(null, getRandomWort(), "");
+	System.out.print("TEST");
+	} while(!this.getResult(antwort) && timer.isRunning());
+	
+	timer.stop();
+	return 2;
 }
 private String getRandomWort() {
 	int random = (int) (wortListe[difficulty].getWortanzahl()*Math.random());
@@ -124,22 +124,35 @@ public int getWortwahl() {
 public void actionPerformed(ActionEvent e) {
 	// TODO Auto-generated method stub
 	if(e.getSource() == knopf){
-		if (startTime < 0) {
-            startTime = System.currentTimeMillis();
-        }
-        long now = System.currentTimeMillis();
-        long clockTime = now - startTime;
-        if (clockTime >= duration) {
-            clockTime = duration;
-            timer.stop();
-        }
-        SimpleDateFormat df = new SimpleDateFormat("mm:ss:SSS");
-        anzeigetext.setText(df.format(duration - clockTime));
-        
-		if (!timer.isRunning()) {
-            startTime = -1;
-            timer.start();
-        }
+		startTimer();
 	}
+	if(e.getSource() == timer) {
+		long now = System.currentTimeMillis();
+	    long clockTime = now - startTime;
+		SimpleDateFormat df = new SimpleDateFormat("mm:ss:SSS");
+		anzeigetext.setText(df.format(duration - clockTime));
+		  if (clockTime >= duration) {
+		        clockTime = duration;
+		        timer.stop();
+		        duration = 30000;
+		        startTime = -1;
+		        fenster.setVisible(false);
+		    }
+	}
+}
+public void startTimer() {
+	if (startTime < 0) {
+        startTime = System.currentTimeMillis();
+    }
+    long now = System.currentTimeMillis();
+    long clockTime = now - startTime;
+  
+    SimpleDateFormat df = new SimpleDateFormat("mm:ss:SSS");
+    anzeigetext.setText(df.format(duration - clockTime));
+    
+    timer.addActionListener(this);
+	if (!timer.isRunning()) {
+        timer.start();
+    }
 }
 }
