@@ -6,13 +6,9 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
-import org.jdom2.output.XMLOutputter; 
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
-import ch.aplu.util.*;
-import java.math.*;
 import java.text.SimpleDateFormat;
 
 class Vokabelspiel implements ActionListener
@@ -92,12 +88,15 @@ public int play() {
     fenster.setVisible(true); 
 	do 
 	{
-	antwort = JOptionPane.showInputDialog(null, getRandomWort(), "");
-	System.out.print("TEST");
+	antwort = JOptionPane.showInputDialog(fenster, getRandomWort(), "");
 	} while(!this.getResult(antwort) && timer.isRunning());
-	
+	if(antwort == null) {
+		return 3;
+	}
+	else {
 	timer.stop();
 	return 2;
+	}
 }
 private String getRandomWort() {
 	int random = (int) (wortListe[difficulty].getWortanzahl()*Math.random());

@@ -7,7 +7,6 @@ import java.awt.*;
 import ch.aplu.util.*;
 import ch.aplu.bluetooth.*;
 import javax.swing.*;
-import javax.xml.crypto.Data;
 
 import java.awt.event.*;
 
@@ -19,6 +18,7 @@ public class BattleshipApp extends GameGrid
   protected String msgMyMove = "Click a cell to fire";
   protected String msgYourMove = "Please wait enemy bomb";
   protected volatile boolean isOver = false;
+  protected volatile int roundNumber = 0;
   public final int ulx,uly;
   private Location currentLoc;
   private final String serviceName = "Battleship";
@@ -70,13 +70,7 @@ public class BattleshipApp extends GameGrid
       fleet[i].show(0);
       fleet[i].setMouseEnabled(false);
     }
-    //int[] data = new int[1];
-    //data[0] = 3;
-    //receiveDataBlock(data);
-    getReady();
-    //Vokabelspiel.Go = true;
-    //vgame.play();
-    //connect();  // Blocks until connected
+    connect();  // Blocks until connected
     addExitListener(this);
     addMouseListener(this, GGMouse.lPress);
   }
@@ -87,16 +81,16 @@ public class BattleshipApp extends GameGrid
 	  if(e.getSource() == knopf){
 		  if(Vokabelspiel.Go) {
 			  data[0] = 2;
-			  //bp.sendDataBlock(data);
+			  bp.sendDataBlock(data);
 			  fenster.dispose();
 			  data[0] = vgame.play();
-			  //bp.sendDataBlock(data);
+			  bp.sendDataBlock(data);
 		  }
 		  else {
 		  data[0] = 1;
           knopf.setText("Warte auf Ready-up");
           Vokabelspiel.Go = true;
-          //bp.sendDataBlock(data);
+          bp.sendDataBlock(data);
 		  }
       } 
 	}
@@ -176,7 +170,6 @@ public class BattleshipApp extends GameGrid
   }
   
   public void getReady() {
-
 		 fenster = new JDialog();
 		 knopf = new JButton("Ready ?");
 		 knopf.setSize(100,100);
@@ -204,7 +197,7 @@ public class BattleshipApp extends GameGrid
 			  break;
 		  case 3: 
 			  StatusDialog win = new StatusDialog(ulx, uly, true);
-			  win.setText("Sie haben gewonnen ! Hier ihr Preis ! ", true);
+			  win.setText("Sie haben gewonnen ! Hier ihr Preis ! *INSERT COOKIE HERE*", true);
 			  Monitor.putSleep();
 			  win.dispose();  
 			  break;
@@ -268,7 +261,7 @@ public class BattleshipApp extends GameGrid
 
   public boolean notifyExit()
   {
-    //bp.releaseConnection();
+    bp.releaseConnection();
     return true;
   }
 
