@@ -7,35 +7,62 @@ import java.awt.*;
 import ch.aplu.util.*;
 import ch.aplu.bluetooth.*;
 import javax.swing.*;
-
+import javax.xml.crypto.Data;
 import java.awt.event.*;
+import java.util.ArrayList;
 
 public class BattleshipApp extends GameGrid
-  implements GGMouseListener, GGExitListener, BtPeerListener, ActionListener
+  implements GGMouseListener, GGExitListener, BtPeerListener, ActionListener, GGButtonListener
 {
   private final static String title = "JGameGrid Battleship V2.0";
   protected volatile boolean isMyMove;
   protected String msgMyMove = "Click a cell to fire";
   protected String msgYourMove = "Please wait enemy bomb";
   protected volatile boolean isOver = false;
-  protected volatile int roundNumber = 0;
   public final int ulx,uly;
   private Location currentLoc;
   private final String serviceName = "Battleship";
   private BluetoothPeer bp;
+  private final Color BLACK = java.awt.Color.BLACK;
+  private final Color GRAY= java.awt.Color.GRAY;
+  private final Color WHITE = java.awt.Color.WHITE;
   private Vokabelspiel vgame;
   private JDialog fenster;
   private JButton knopf;
+  private JButton server = new JButton("Server starten");
+  private JButton client = new JButton("Als Client starten");
+  private JButton sprache = new JButton("Sprache wechseln");
+  private JButton exit = new JButton("Exit");
+  public String turns = "0";
+  public int turnnumber = 0;
+  public String hits = "0";
+  public int hitnumber = 0;
+  Font font = new Font("Serif", Font.BOLD, 18);
 
   public BattleshipApp()
   {
-    super(10, 10, 25, Color.black, null, false, 4);  // Only 4 rotated sprites
-    Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-    ulx = (dim.width - getWidth()) / 2 - 200;
-    uly = (dim.height - getHeight()) / 2;
-    setTitle(title);
-    setBgColor(Color.blue);
-    setSimulationPeriod(50);
+	    super(21, 20, 30, Color.black, null, false, 4);  // Only 4 rotated sprites
+	    // setCellSize(40);
+	     Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+	     ulx = (dim.width - getWidth()) / 2 - 400;
+	     uly = (dim.height - getHeight()) / 2;
+	     setTitle(title);
+	     setBgColor(Color.blue);
+	     setSimulationPeriod(50);
+	     
+	  // Trennstrich
+	     GGBackground bg =this.getBg();
+	     bg.setPaintColor(BLACK);
+	     bg.fillCell(new Location(10,0), BLACK);
+	     bg.fillCell(new Location(10,1), BLACK);
+	     bg.fillCell(new Location(10,2), BLACK);
+	     bg.fillCell(new Location(10,3), BLACK);
+	     bg.fillCell(new Location(10,4), BLACK);
+	     bg.fillCell(new Location(10,5), BLACK);
+	     bg.fillCell(new Location(10,6), BLACK);
+	     bg.fillCell(new Location(10,7), BLACK);
+	     bg.fillCell(new Location(10,8), BLACK);
+	     bg.fillCell(new Location(10,9), BLACK);
 
     vgame = new Vokabelspiel("lang1.xml",ulx,uly);
     
@@ -47,6 +74,14 @@ public class BattleshipApp extends GameGrid
       new Submarine(),
       new PatrolBoat()
     };
+    Airforce[] airborne =
+    {
+      new Plane(),
+      new Plane(),
+      new Airship(),
+      new Choppah(),
+      new HeliumBalloon()
+    };
 
     for (int i = 0; i < fleet.length; i++)
     {
@@ -54,8 +89,21 @@ public class BattleshipApp extends GameGrid
       addMouseListener(fleet[i], GGMouse.lPress | GGMouse.lDrag | GGMouse.lRelease);
       addKeyListener(fleet[i]);
     }
+    for (int i = 0; i < airborne.length; i++)
+    {
+      addActor(airborne[i], new Location(11, 2 * i));
+      addMouseListener(airborne[i], GGMouse.lPress | GGMouse.lDrag | GGMouse.lRelease);
+      addKeyListener(airborne[i]);
+    }
     show();
     doRun();
+    
+    bg.setPaintColor(GRAY);
+    for(int j=0;j<21; j++)  for(int jj=10;jj<20; jj++)  bg.fillCell(new Location(j,jj), GRAY );
+    
+    GGButton kamikaze = new GGButton("sprites/Destroyer.gif", false); 
+    addActor(kamikaze, new Location(1,10));
+    kamikaze.addButtonListener(this);
     
     StatusDialog status = new StatusDialog(ulx, uly, true);
     status.setText("Deploy your fleet now!\n" +
@@ -64,22 +112,23 @@ public class BattleshipApp extends GameGrid
       "Press 'Continue' to start the game.", true);
     Monitor.putSleep();  // Wait for dialog to be closed
     status.dispose();
-
+    
     for (int i = 0; i < fleet.length; i++)
     {
       fleet[i].show(0);
       fleet[i].setMouseEnabled(false);
     }
-    connect();  // Blocks until connected
+    mainMenue();
+    //connect();  // Blocks until connected
     addExitListener(this);
     addMouseListener(this, GGMouse.lPress);
   }
-
+  
   public void actionPerformed(ActionEvent e) {
-	  int data[] = new int[1];
-	  
-	  if(e.getSource() == knopf){
-		  if(Vokabelspiel.Go) {
+	  int data[] = new int[1];  
+	  if(e.getSource() == knopf)
+	  {
+	     if(Vokabelspiel.Go) {
 			  data[0] = 2;
 			  bp.sendDataBlock(data);
 			  fenster.dispose();
@@ -93,6 +142,18 @@ public class BattleshipApp extends GameGrid
           bp.sendDataBlock(data);
 		  }
       } 
+	  if(e.getSource() == exit) {
+		  System.exit(0);
+	  }
+	  if(e.getSource() == server) {
+		  
+	  }
+	  if(e.getSource() == client) {
+		  
+	  }
+	  if(e.getSource() == sprache) {
+		vgame.menu();  
+	  }
 	}
   
   public boolean mouseEvent(GGMouse mouse)
@@ -106,6 +167,18 @@ public class BattleshipApp extends GameGrid
     bp.sendDataBlock(data);
     return false;
   }
+  
+  void kamikazeClicked(GGButton kamikaze) 
+  {
+	  System.out.println("Check");
+	  ArrayList<Actor> zeros = getActors(Plane.class);
+	  Location loczero = zeros.get(0).getLocation();
+	  int[] impact = 
+			  {
+					  loczero.x, loczero.y, 0
+			  };
+	  bp.sendDataBlock(impact);
+  }
 
   protected void markLocation(int k)
   {
@@ -116,6 +189,7 @@ public class BattleshipApp extends GameGrid
         break;
       case 1: // hit
         addActor(new Actor("sprites/hit.gif"), currentLoc);
+        hits();
         break;
       case 2: // sunk
         addActor(new Actor("sprites/sunk.gif"), currentLoc);
@@ -149,7 +223,7 @@ public class BattleshipApp extends GameGrid
     {
       setTitle("Connect OK. You shoot now");
       isMyMove = true;  // Client has first move
-      getReady();
+      //getReady();
     }
     else
       setTitle("Waiting as server " + BluetoothFinder.getLocalBluetoothName());
@@ -184,7 +258,7 @@ public class BattleshipApp extends GameGrid
  
   public void receiveDataBlock(int[] data)
   {
-	  if(data.length == 1) {
+	 /* if(data.length == 1) {
 		  switch(data[0]) {
 		  case 1:
 			Vokabelspiel.Go = true;
@@ -197,9 +271,16 @@ public class BattleshipApp extends GameGrid
 			  break;
 		  case 3: 
 			  StatusDialog win = new StatusDialog(ulx, uly, true);
-			  win.setText("Sie haben gewonnen ! Hier ihr Preis ! *INSERT COOKIE HERE*", true);
+			  win.setText("Sie haben gewonnen ! Hier ihr Preis ! ", true);
 			  Monitor.putSleep();
 			  win.dispose();  
+			  data[0] = 4;
+			  bp.sendDataBlock(data);
+			  break;
+		  case 4:
+			  int[] vgameLocation = new int[4];
+			  vgameLocation = getRandomShipLocation(2);
+			  
 			  break;
 		  case 10:
 			  //bp.sendDataBlock(kamikazeCliked());
@@ -207,7 +288,8 @@ public class BattleshipApp extends GameGrid
 		  }
 	  }
 	  else 
-	  {
+	  {*/
+	  
 		  if (isMyMove)
 		    {
 		      markLocation(data[0]);
@@ -215,6 +297,7 @@ public class BattleshipApp extends GameGrid
 		      {
 		        isMyMove = false;
 		        setTitle(msgYourMove);
+		        turns();
 		      }
 		    }
 		    else
@@ -233,6 +316,44 @@ public class BattleshipApp extends GameGrid
 		      }
 		    }
 	  }
+  
+  public void mainMenue() {
+	  int buttonx = 200;
+	  int buttony = 50;
+	  	 fenster = new JDialog();
+	  	 fenster.setLayout(null);
+		 server.setSize(buttonx,buttony);
+		 client.setSize(buttonx,buttony);
+		 sprache.setSize(buttonx,buttony);
+		 exit.setSize(buttonx,buttony);
+		 server.setLocation(50, 0);
+		 client.setLocation(50,50);
+		 sprache.setLocation(50,100);
+		 exit.setLocation(50, 150);
+		 server.addActionListener(this);
+		 client.addActionListener(this);
+		 sprache.addActionListener(this);
+		 exit.addActionListener(this);
+		 fenster.setLocation(ulx, uly);
+		 fenster.setTitle("1 vs 1 Vokabelspiel - Hauptmenü");
+		 fenster.setSize(300,300);
+		 fenster.setModal(false);
+		 fenster.add(server);
+		 fenster.add(client);
+		 fenster.add(sprache);
+		 fenster.add(exit);
+		 fenster.setVisible(true);
+  }
+
+public String turns() {
+	  ++turnnumber;
+	  turns = Integer.toString(turnnumber);
+	return turns;
+	  }
+  public String hits() {
+	  ++hitnumber;
+	  hits = Integer.toString(hitnumber);
+	  return hits;
   }
 
   private int createReply(Location loc)
@@ -261,13 +382,28 @@ public class BattleshipApp extends GameGrid
 
   public boolean notifyExit()
   {
-    bp.releaseConnection();
+    //bp.releaseConnection();
     return true;
   }
 
   public static void main(String[] args)
   {
     new BattleshipApp();
+  }
+  @Override
+  public void buttonClicked(GGButton arg0) {
+  	// TODO Auto-generated method stub
+  	
+  }
+  @Override
+  public void buttonPressed(GGButton arg0) {
+  	// TODO Auto-generated method stub
+  	
+  }
+  @Override
+  public void buttonReleased(GGButton arg0) {
+  	// TODO Auto-generated method stub
+  	
   }
 
 }

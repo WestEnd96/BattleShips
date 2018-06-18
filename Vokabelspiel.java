@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.List;
 
@@ -23,16 +24,17 @@ public static boolean Go;
 private Timer timer;
 private long startTime = -1;
 private long duration = 3000;
+private File sprachDatei;
 public final int ulx,uly;
 
 public Vokabelspiel(String filename,int x, int y){
     Document doc = null;
-    File f = new File(filename);
+    sprachDatei = new File(filename);
   
     ulx = x;
     uly = y;
     
-    if(!f.exists()) { 
+    if(!sprachDatei.exists()) { 
     	System.out.print("File not found !");
     	System.exit(0);
     }
@@ -40,7 +42,7 @@ public Vokabelspiel(String filename,int x, int y){
     try {
         // Das Dokument erstellen
         SAXBuilder builder = new SAXBuilder();
-        doc = builder.build(f);
+        doc = builder.build(sprachDatei);
         //XMLOutputter fmt = new XMLOutputter()
         //Wurzelelement ausgeben
         Element root = doc.getRootElement();
@@ -61,6 +63,43 @@ public Vokabelspiel(String filename,int x, int y){
         e.printStackTrace();
     }
 } 
+public void menu() {
+	File folder=new File(".");
+    File[]listOfFiles=folder.listFiles(new TextFileFilter());
+    JList displayList = new JList(listOfFiles);
+    JScrollPane listeFenster = new JScrollPane(displayList);
+    displayList.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent evt) {
+            JList list = (JList)evt.getSource();
+            if (evt.getClickCount() == 2) {
+                // Double-click detected
+                int index = list.locationToIndex(evt.getPoint());
+                System.out.print(index);
+                switch(JOptionPane.showConfirmDialog(listeFenster, "Wollen Sie die Datei "+list.getName()+" wirklich laden ?")) {
+                case 0:
+                	sprachDatei = new File(list);
+                	break;
+                case 1:
+                	break;
+                case 2:
+                	break;
+                }
+            } 
+        }
+    });
+	 displayList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+    // displayList.setCellRenderer(new MyCellRenderer());
+     displayList.setLayoutOrientation(javax.swing.JList.VERTICAL_WRAP);
+     displayList.setName("displayList");
+     JFrame f = new JFrame("Sprachdatei");
+     f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    // f.setPreferredSize(new Dimension(500, 300));
+     displayList.setVisibleRowCount(-1);
+     f.add(listeFenster);
+     f.pack();
+     f.setVisible(true);
+     
+}
 public int play() {
 	if(Vokabelspiel.Go) {
 		fenster = new JDialog();
@@ -79,10 +118,8 @@ public int play() {
 		Vokabelspiel.Go = false;
 	}
 	String antwort;
-	
 	timer = new Timer(10, this);
 	timer.setInitialDelay(0);
-	
     startTimer();
     fenster.setModal(false);
     fenster.setVisible(true); 
@@ -133,7 +170,7 @@ public void actionPerformed(ActionEvent e) {
 		  if (clockTime >= duration) {
 		        clockTime = duration;
 		        timer.stop();
-		        duration = 30000;
+		        duration = 5000;
 		        startTime = -1;
 		        fenster.setVisible(false);
 		    }
@@ -155,3 +192,9 @@ public void startTimer() {
     }
 }
 }
+class TextFileFilter implements FileFilter {
+    public boolean accept(File file) {
+        String name=file.getName();
+        return name.length()<28&&name.endsWith(".xml");
+        }
+    }
