@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.xml.crypto.Data;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class BattleshipApp extends GameGrid
   implements GGMouseListener, GGExitListener, BtPeerListener, ActionListener, GGButtonListener
@@ -38,6 +39,13 @@ public class BattleshipApp extends GameGrid
   public String hits = "0";
   public int hitnumber = 0;
   Font font = new Font("Serif", Font.BOLD, 18);
+  
+  int score = 0, points = 0, bonus = 0;
+  Ship[] fleet;
+  Airforce[] airborne;
+  Actor turncounter = new TextActor("Turns:" + " " + turns, BLACK, WHITE, font);
+  Actor hitcounter = new TextActor("Hits:" + "" + hits, BLACK, WHITE, font);
+  Actor highscore = new TextActor("Score" + Integer.toString(score), java.awt.Color.BLACK, java.awt.Color.WHITE, this.font);
 
   public BattleshipApp()
   {
@@ -64,8 +72,6 @@ public class BattleshipApp extends GameGrid
 	     bg.fillCell(new Location(10,8), BLACK);
 	     bg.fillCell(new Location(10,9), BLACK);
 
-    vgame = new Vokabelspiel("lang1.xml",ulx,uly);
-    
     Ship[] fleet =
     {
       new Carrier(),
@@ -105,6 +111,10 @@ public class BattleshipApp extends GameGrid
     addActor(kamikaze, new Location(1,10));
     kamikaze.addButtonListener(this);
     
+    addActor(turncounter, new Location(1,11));
+    addActor(hitcounter, new Location(1,12));
+    addActor(highscore, new Location(1,13));
+    
     StatusDialog status = new StatusDialog(ulx, uly, true);
     status.setText("Deploy your fleet now!\n" +
       "Use the red marker to drag the ship.\n" +
@@ -119,7 +129,7 @@ public class BattleshipApp extends GameGrid
       fleet[i].setMouseEnabled(false);
     }
     mainMenue();
-    //connect();  // Blocks until connected
+    vgame = new Vokabelspiel(ulx,uly);
     addExitListener(this);
     addMouseListener(this, GGMouse.lPress);
   }
@@ -146,38 +156,39 @@ public class BattleshipApp extends GameGrid
 		  System.exit(0);
 	  }
 	  if(e.getSource() == server) {
-		  
+		  fenster.dispose();
+		  connect();  // Blocks until connected
 	  }
 	  if(e.getSource() == client) {
-		  
+		  fenster.dispose();
+		  connect();  // Blocks until connected
 	  }
 	  if(e.getSource() == sprache) {
-		vgame.menu();  
+		Vokabelspiel.menu();  
 	  }
 	}
   
   public boolean mouseEvent(GGMouse mouse)
   {
-    setMouseEnabled(false);
-    currentLoc = toLocationInGrid(mouse.getX(), mouse.getY());
-    int[] data =
-    {
-      currentLoc.x, currentLoc.y
-    };
-    bp.sendDataBlock(data);
-    return false;
+		if (currentLoc.y < 11) {
+		    setMouseEnabled(false);
+		    currentLoc = toLocationInGrid(mouse.getX(), mouse.getY());
+		    int[] data =
+		    {
+		      currentLoc.x, currentLoc.y
+		    };
+		    bp.sendDataBlock(data);
+		    return false;
+			}
+			if (currentLoc.y < 10) {
+				return false;
+			}
+			return true;
   }
   
   void kamikazeClicked(GGButton kamikaze) 
   {
-	  System.out.println("Check");
-	  ArrayList<Actor> zeros = getActors(Plane.class);
-	  Location loczero = zeros.get(0).getLocation();
-	  int[] impact = 
-			  {
-					  loczero.x, loczero.y, 0
-			  };
-	  bp.sendDataBlock(impact);
+	  
   }
 
   protected void markLocation(int k)
@@ -258,7 +269,7 @@ public class BattleshipApp extends GameGrid
  
   public void receiveDataBlock(int[] data)
   {
-	 /* if(data.length == 1) {
+	  if(data.length == 1) {
 		  switch(data[0]) {
 		  case 1:
 			Vokabelspiel.Go = true;
@@ -277,18 +288,21 @@ public class BattleshipApp extends GameGrid
 			  data[0] = 4;
 			  bp.sendDataBlock(data);
 			  break;
-		  case 4:
-			  int[] vgameLocation = new int[4];
-			  vgameLocation = getRandomShipLocation(2);
-			  
+		  case 4:  
 			  break;
-		  case 10:
-			  //bp.sendDataBlock(kamikazeCliked());
-			  break;
+
 		  }
 	  }
+	  if (data.length == 4) { 
+		  int n = getNumberOfActors(Ship.class) + 1;
+		  Random target = new Random();
+		  int t = target.nextInt(n);
+		  ArrayList<Actor> Fleet = getActors(Ship.class);
+		  createReply(Fleet.get(0).getLocation());
+		  
+	  }
 	  else 
-	  {*/
+	  {
 	  
 		  if (isMyMove)
 		    {
@@ -315,6 +329,7 @@ public class BattleshipApp extends GameGrid
 		        setMouseEnabled(true);
 		      }
 		    }
+	  }
 	  }
   
   public void mainMenue() {
@@ -344,40 +359,84 @@ public class BattleshipApp extends GameGrid
 		 fenster.add(exit);
 		 fenster.setVisible(true);
   }
-
-public String turns() {
+  
+  public void turns() {
 	  ++turnnumber;
 	  turns = Integer.toString(turnnumber);
-	return turns;
+	  Actor turncounter = new TextActor("Turns:" + " " + turns, BLACK, WHITE, font);
+	    addActor(turncounter, new Location(1,11));
 	  }
-  public String hits() {
+  public void hits() {
 	  ++hitnumber;
 	  hits = Integer.toString(hitnumber);
-	  return hits;
+	  Actor hitcounter = new TextActor("Hits:" + " " + hits, BLACK, WHITE, font);
+	    addActor(hitcounter, new Location(1,12));
+	    Scoreboard();
   }
-
+  public void Scoreboard() {
+		if (turnnumber <= 10) {
+			points =  10;
+		}
+		if (turnnumber > 10 && turnnumber <= 20) {
+			points = 5;
+		}
+		if (turnnumber > 20) {
+			points = 2;
+		}
+		bonus = getBonus();
+		score = score + points + bonus;
+		Actor highscore = new TextActor("Score" + Integer.toString(score), java.awt.Color.BLACK, java.awt.Color.WHITE, this.font);
+		addActor(highscore, new Location(1,13));
+	}
+  
+  public int getBonus() {
+	  ArrayList<Actor> sunken = getActors();
+	  bonus = (sunken.size() - fleet.length + airborne.length) * 20;
+	return bonus;
+	  
+  }
   private int createReply(Location loc)
   {
-    for (Actor a : getActors(Ship.class))
-    {
-      String s = ((Ship)a).hit(loc);
-      if (s.equals("hit"))
-        return 1;
-      if (s.equals("sunk"))
-        return 2;
-      if (s.equals("allSunk"))
-      {
-        isOver = true;
-        removeAllActors();
-        addActor(new Actor("sprites/gameover.gif"), new Location(5, 2));
-        addActor(new Actor("sprites/allsunk.gif"), new Location(5, 6));
-        setTitle("Game over. You lost");
-        return 3;
-      }
-    }
-    // miss
-    addActor(new Water(), loc);
-    return 0;
+	  if (loc.x < 11) {
+	    for (Actor a : getActors(Ship.class))
+	    {
+	      String s = ((Ship)a).hit(loc);
+	      if (s.equals("hit"))
+	        return 1;
+	      if (s.equals("sunk"))
+	        return 2;
+	      if (s.equals("allSunk"))
+	      {
+	        isOver = true;
+	        removeAllActors();
+	        addActor(new Actor("sprites/gameover.gif"), new Location(5, 2));
+	        addActor(new Actor("sprites/allsunk.gif"), new Location(5, 6));
+	        setTitle("Game over. You lost");
+	        return 3;
+	      }
+	    }
+	    } if (loc.x > 11) {
+	    	 for (Actor a : getActors(Airforce.class))
+	    	    {
+	    	      String s = ((Airforce)a).hit(loc);
+	    	      if (s.equals("hit"))
+	    	        return 1;
+	    	      if (s.equals("sunk"))
+	    	        return 2;
+	    	      if (s.equals("allSunk"))
+	    	      {
+	    	        isOver = true;
+	    	        removeAllActors();
+	    	        addActor(new Actor("sprites/gameover.gif"), new Location(5, 2));
+	    	        addActor(new Actor("sprites/allsunk.gif"), new Location(5, 6));
+	    	        setTitle("Game over. You lost");
+	    	        return 3;
+	    	      }
+	    }
+	    }
+	    // miss
+	    addActor(new Water(), loc);
+	    return 0;
   }
 
   public boolean notifyExit()
@@ -391,19 +450,69 @@ public String turns() {
     new BattleshipApp();
   }
   @Override
-  public void buttonClicked(GGButton arg0) {
-  	// TODO Auto-generated method stub
-  	
-  }
-  @Override
-  public void buttonPressed(GGButton arg0) {
-  	// TODO Auto-generated method stub
-  	
-  }
-  @Override
-  public void buttonReleased(GGButton arg0) {
-  	// TODO Auto-generated method stub
-  	
-  }
+
+public void buttonClicked(GGButton kamikaze) {
+	if (isMyMove = true) {
+		System.out.println("Check");
+		ArrayList<Actor> zeros = getActors(Plane.class);
+		Location loczero = zeros.get(0).getLocation();
+		int dirzero = zeros.get(0).getIntDirection();
+		if (dirzero == 0) {
+			int[] impact = 
+				{
+						loczero.x, loczero.y, loczero.x + 1, loczero.y
+				};
+				createReply(loczero);
+				createReply(new Location(loczero.x + 1, loczero.y));
+				bp.sendDataBlock(impact);
+		}
+		if (dirzero == 90) {
+			int[] impact = 
+				{
+						loczero.x, loczero.y, loczero.x, loczero.y + 1
+				}; 
+		  		createReply(loczero);
+		  		createReply(new Location(loczero.x, loczero.y + 1));
+		  		bp.sendDataBlock(impact);
+		}
+		if (dirzero == 180) {
+			int[] impact = 
+				{
+						loczero.x, loczero.y, loczero.x - 1, loczero.y
+				}; 
+		  		createReply(loczero);
+		  		createReply(new Location(loczero.x - 1, loczero.y));
+		  		bp.sendDataBlock(impact);
+		}
+		if (dirzero == 270) {
+			int[] impact = 
+				{
+						loczero.x, loczero.y, loczero.x, loczero.y - 1
+				}; 
+				createReply(loczero);
+				createReply(new Location(loczero.x, loczero.y - 1));
+				bp.sendDataBlock(impact);
+		}
+		markLocation(4);
+	// TODO Auto-generated method stub
+	
+	} else {
+		Actor error = new TextActor("Not your Move!", BLACK, WHITE, font);
+		addActor(error, new Location(5,10));
+	}
+}
+
+@Override
+public void buttonPressed(GGButton arg0) {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void buttonReleased(GGButton arg0) {
+	// TODO Auto-generated method stub
+	
+}
+
 
 }

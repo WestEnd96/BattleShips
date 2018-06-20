@@ -1,6 +1,8 @@
 // Ship.java
 
 import ch.aplu.jgamegrid.*;
+import ch.aplu.util.Monitor;
+
 import java.awt.event.KeyEvent;
 public abstract class Airforce extends Actor
   implements GGMouseListener, GGKeyListener
@@ -197,7 +199,7 @@ private int getStatus()
       removeSelf();
       for (int i = 0; i < size; i++)
         gameGrid.removeActorsAt(cells[i], Fire.class);
-      if (gameGrid.getNumberOfActors(Ship.class) == 0)
+      if (gameGrid.getNumberOfActors(Ship.class) == 0 && gameGrid.getNumberOfActors(Airforce.class) == 0)
       {
        
         return 2;

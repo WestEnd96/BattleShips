@@ -1,9 +1,7 @@
 // Ship.java
 
-
 import ch.aplu.jgamegrid.*;
 import java.awt.event.KeyEvent;
-
 public abstract class Ship extends Actor
   implements GGMouseListener, GGKeyListener
 {
@@ -13,7 +11,6 @@ public abstract class Ship extends Actor
   private Location lastLocation;
   private boolean isDragging = false;
   private boolean isMouseEnabled = true;
-
   public Ship(String img, int size)
   {
     super(true, img, 2); // Rotatable, 2 images
@@ -21,7 +18,6 @@ public abstract class Ship extends Actor
     cells = new Location[size];
     isHit = new boolean[size];
   }
-
   public void reset()
   {
     show(1);
@@ -32,7 +28,6 @@ public abstract class Ship extends Actor
       isHit[i] = false;
     }
   }
-
   public boolean mouseEvent(GGMouse mouse)
   {
     if (!isMouseEnabled)
@@ -63,7 +58,6 @@ public abstract class Ship extends Actor
     updateCells(getLocation());
     return false;
   }
-
   private void updateCells(Location loc)
   {
     int dir = getIntDirection();
@@ -79,7 +73,6 @@ public abstract class Ship extends Actor
         cells[i] = new Location(loc.x, loc.y - i);
     }
   }
-
   public boolean keyPressed(KeyEvent evt)
   {
     if (!isDragging)
@@ -95,34 +88,29 @@ public abstract class Ship extends Actor
     }
     return false;  // Don't consume the key
   }
-
   public boolean keyReleased(KeyEvent evt)
   {
     return false;
   }
-
   private boolean advance(Location loc, int angle)
   // Try to advance to new location/direction
   // Return false, if outside grid or overlap with another ship
   {
     turn(angle);
-
     boolean ok = true;
     // Save current cell locations
     Location[] currentCells = new Location[size];
     for (int i = 0; i < size; i++)
       currentCells[i] = cells[i].clone();
-
     // Update cell locations
     updateCells(loc);
-
     // Check if all cells are in grid
     for (int i = 0; i < size; i++)
     {
       if (!gameGrid.isInGrid(cells[i]))
         ok = false;
     }
-
+    
     // If ok, check for overlap
     if (ok)
     {
@@ -132,7 +120,31 @@ public abstract class Ship extends Actor
           ok = false;
       }
     }
-
+    
+   
+    
+     
+    //In richtigem Teil des Grid
+   if (this.getDirection() == 0.0) {
+    if (loc.x > 10 - size || loc.y > 10 - 1) {
+        ok = false;
+   //		System.out.println("plonk"+ this.getDirection());
+    }   
+   }
+   if (this.getDirection() == 180.0 || this.getDirection() == 270.0) {
+	   if (loc.x > 10 - 1 || loc.y > 10 - 1) {
+	        ok = false;
+	 //       System.out.println("plonk"+ this.getDirection());
+	    }    
+   }
+   if (this.getDirection() == 90) {
+	   if (loc.y > 10 - size) {
+		   ok = false;
+	   }
+   }
+  
+   
+   
     // If failed, restore old cells and old direction
     if (!ok)
     {
@@ -142,7 +154,6 @@ public abstract class Ship extends Actor
     }
     return ok;
   }
-
   private boolean overlap(Ship a)
   // Check if current ship overlaps with given ship a
   {
@@ -152,7 +163,6 @@ public abstract class Ship extends Actor
           return true;
     return false;
   }
-
   public String hit(Location loc)
   {
     String reply = null;
@@ -189,7 +199,7 @@ public abstract class Ship extends Actor
       removeSelf();
       for (int i = 0; i < size; i++)
         gameGrid.removeActorsAt(cells[i], Fire.class);
-      if (gameGrid.getNumberOfActors(Ship.class) == 0)
+      if (gameGrid.getNumberOfActors(Ship.class) == 0 && gameGrid.getNumberOfActors(Airforce.class) == 0)
       {
        
         return 2;
@@ -198,10 +208,8 @@ public abstract class Ship extends Actor
     }
     return 0;
   }
-
   protected void setMouseEnabled(boolean b)
   {
     isMouseEnabled = b;
   }
-
 }

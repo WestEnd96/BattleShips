@@ -21,84 +21,79 @@ private JDialog fenster;
 private JButton knopf;
 private JLabel anzeigetext;
 public static boolean Go;
+public static String filename;
 private Timer timer;
 private long startTime = -1;
 private long duration = 3000;
 private File sprachDatei;
 public final int ulx,uly;
 
-public Vokabelspiel(String filename,int x, int y){
+public Vokabelspiel(int x, int y){
     Document doc = null;
-    sprachDatei = new File(filename);
-  
+    String standard = "lang1.xml";
+    
+    if(Vokabelspiel.filename == null) {
+    	sprachDatei = new File(standard);
+    }
+    else {
+    	sprachDatei = new File(Vokabelspiel.filename);
+    }
     ulx = x;
     uly = y;
-    
-    if(!sprachDatei.exists()) { 
-    	System.out.print("File not found !");
-    	System.exit(0);
-    }
-
     try {
-        // Das Dokument erstellen
         SAXBuilder builder = new SAXBuilder();
         doc = builder.build(sprachDatei);
-        //XMLOutputter fmt = new XMLOutputter()
-        //Wurzelelement ausgeben
         Element root = doc.getRootElement();
         int levelCount  = root.getChildren().size();
         wortListe = new Wörter[levelCount];
         
         for(int i=0;i<levelCount;i++) {
         	String name = "Level"+(i+1);
-        	
         	List<Element> LISTE = root.getChild(name).getChildren();
         	wortListe[i] = new Wörter(LISTE);
-        }
-        
-        
+        }     
     } catch (JDOMException e) {
         e.printStackTrace();
     } catch (IOException e) {
         e.printStackTrace();
     }
 } 
-public void menu() {
-	File folder=new File(".");
-    File[]listOfFiles=folder.listFiles(new TextFileFilter());
-    JList displayList = new JList(listOfFiles);
+public static void menu() {
+	File ordner=new File(".");
+    File[]dateiliste=ordner.listFiles(new TextFileFilter());
+    
+    JList displayList = new JList(dateiliste);
     JScrollPane listeFenster = new JScrollPane(displayList);
+    JFrame f = new JFrame("Sprachdatei-Explorer");
+    
     displayList.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent evt) {
             JList list = (JList)evt.getSource();
             if (evt.getClickCount() == 2) {
                 // Double-click detected
                 int index = list.locationToIndex(evt.getPoint());
-                System.out.print(index);
-                switch(JOptionPane.showConfirmDialog(listeFenster, "Wollen Sie die Datei "+list.getName()+" wirklich laden ?")) {
+                switch(JOptionPane.showConfirmDialog(listeFenster, "Wollen Sie die Datei "+dateiliste[index]+" wirklich laden ?")) {
                 case 0:
-                	sprachDatei = new File(list);
+                	Vokabelspiel.filename = dateiliste[index].getName();
+                	f.dispose();
                 	break;
                 case 1:
                 	break;
                 case 2:
+                	f.dispose();
                 	break;
                 }
             } 
         }
     });
 	 displayList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-    // displayList.setCellRenderer(new MyCellRenderer());
      displayList.setLayoutOrientation(javax.swing.JList.VERTICAL_WRAP);
      displayList.setName("displayList");
-     JFrame f = new JFrame("Sprachdatei");
-     f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    // f.setPreferredSize(new Dimension(500, 300));
      displayList.setVisibleRowCount(-1);
+     f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+     f.setSize(250, 200);
      f.add(listeFenster);
-     f.pack();
      f.setVisible(true);
-     
 }
 public int play() {
 	if(Vokabelspiel.Go) {
@@ -170,7 +165,7 @@ public void actionPerformed(ActionEvent e) {
 		  if (clockTime >= duration) {
 		        clockTime = duration;
 		        timer.stop();
-		        duration = 5000;
+		        duration = 30000;
 		        startTime = -1;
 		        fenster.setVisible(false);
 		    }
