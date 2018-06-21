@@ -97,6 +97,7 @@ public static void menu() {
 }
 public int play() {
 	if(Vokabelspiel.Go) {
+		setDifficulty(0);
 		fenster = new JDialog();
 		fenster.setTitle("COUNTDOWN");
 		fenster.setSize(200,200);
@@ -162,6 +163,9 @@ public void actionPerformed(ActionEvent e) {
 	    long clockTime = now - startTime;
 		SimpleDateFormat df = new SimpleDateFormat("mm:ss:SSS");
 		anzeigetext.setText(df.format(duration - clockTime));
+		if((clockTime*2 == duration)) {
+			setDifficulty(1);
+		}
 		  if (clockTime >= duration) {
 		        clockTime = duration;
 		        timer.stop();

@@ -17,6 +17,7 @@ public class BattleshipApp extends GameGrid
 {
   private final static String title = "JGameGrid Battleship V2.0";
   protected volatile boolean isMyMove;
+  public boolean vgameplay = false;
   protected String msgMyMove = "Click a cell to fire";
   protected String msgYourMove = "Please wait enemy bomb";
   protected volatile boolean isOver = false;
@@ -39,7 +40,7 @@ public class BattleshipApp extends GameGrid
   public String hits = "0";
   public int hitnumber = 0;
   Font font = new Font("Serif", Font.BOLD, 18);
-  
+  public int vgameplayround=0;
   int score = 0, points = 0, bonus = 0;
   Ship[] fleet;
   Airforce[] airborne;
@@ -128,8 +129,10 @@ public class BattleshipApp extends GameGrid
       fleet[i].show(0);
       fleet[i].setMouseEnabled(false);
     }
+   /* int[] data = new int[1];
+    data[0] = 4;
+    receiveDataBlock(data);*/
     mainMenue();
-    vgame = new Vokabelspiel(ulx,uly);
     addExitListener(this);
     addMouseListener(this, GGMouse.lPress);
   }
@@ -140,16 +143,16 @@ public class BattleshipApp extends GameGrid
 	  {
 	     if(Vokabelspiel.Go) {
 			  data[0] = 2;
-			  bp.sendDataBlock(data);
+			 bp.sendDataBlock(data);
 			  fenster.dispose();
 			  data[0] = vgame.play();
-			  bp.sendDataBlock(data);
+			 bp.sendDataBlock(data);
 		  }
 		  else {
 		  data[0] = 1;
           knopf.setText("Warte auf Ready-up");
           Vokabelspiel.Go = true;
-          bp.sendDataBlock(data);
+         bp.sendDataBlock(data);
 		  }
       } 
 	  if(e.getSource() == exit) {
@@ -158,6 +161,7 @@ public class BattleshipApp extends GameGrid
 	  if(e.getSource() == server) {
 		  fenster.dispose();
 		  connect();  // Blocks until connected
+
 	  }
 	  if(e.getSource() == client) {
 		  fenster.dispose();
@@ -218,6 +222,7 @@ public class BattleshipApp extends GameGrid
 
   private void connect()
   {
+	vgame = new Vokabelspiel(ulx,uly);  
     String prompt = "Enter Bluetooth Name";
     String serverName;
     do
@@ -234,7 +239,6 @@ public class BattleshipApp extends GameGrid
     {
       setTitle("Connect OK. You shoot now");
       isMyMove = true;  // Client has first move
-      //getReady();
     }
     else
       setTitle("Waiting as server " + BluetoothFinder.getLocalBluetoothName());
@@ -289,11 +293,33 @@ public class BattleshipApp extends GameGrid
 			  bp.sendDataBlock(data);
 			  break;
 		  case 4:  
+			  StatusDialog loss = new StatusDialog(ulx, uly, true);
+			  loss.setText("Sie haben verloren ! Opfer müssen gebracht werden ! ", true);
+			  Monitor.putSleep();
+			  loss.dispose();  
+			  int s = getNumberOfActors(Ship.class);
+			  int a = getNumberOfActors(Airforce.class);
+			  int[] senden = new int[2];
+			  if(s>a) {
+				  ArrayList<Actor> Fleet = getActors(Ship.class);
+				  Location loc = Fleet.get((int)(Math.random()*s)).getLocation();
+				  createReply(loc); 
+				  senden[0] = loc.x;
+				  senden[1] = loc.y;
+			  }
+			  else {
+				  ArrayList<Actor> Fleet = getActors(Airforce.class);
+				  Location loc = Fleet.get((int)(Math.random()*a)).getLocation();
+				  createReply(loc); 
+				  senden[0] = loc.x;
+				  senden[1] = loc.y;
+			  }
+			  bp.sendDataBlock(senden);
+			  
 			  break;
-
 		  }
 	  }
-	  if (data.length == 4) { 
+	  else if (data.length == 4) { 
 		  int n = getNumberOfActors(Ship.class) + 1;
 		  Random target = new Random();
 		  int t = target.nextInt(n);
@@ -312,6 +338,16 @@ public class BattleshipApp extends GameGrid
 		        isMyMove = false;
 		        setTitle(msgYourMove);
 		        turns();
+		        if(turnnumber%10 != 0 && !vgameplay) {
+		        	vgameplayround = (int)Math.random()*10;
+		        }
+		        if(turnnumber == vgameplayround) {
+		        	getReady();
+		        	vgameplay = true;
+		        }
+		        if(turnnumber % 10 == 0) {
+		        	vgameplay = false;
+		        }
 		      }
 		    }
 		    else
@@ -415,7 +451,7 @@ public class BattleshipApp extends GameGrid
 	        return 3;
 	      }
 	    }
-	    } if (loc.x > 11) {
+	    } if (loc.x > 10) {
 	    	 for (Actor a : getActors(Airforce.class))
 	    	    {
 	    	      String s = ((Airforce)a).hit(loc);
@@ -441,7 +477,7 @@ public class BattleshipApp extends GameGrid
 
   public boolean notifyExit()
   {
-    //bp.releaseConnection();
+    bp.releaseConnection();
     return true;
   }
 
