@@ -142,17 +142,17 @@ public class BattleshipApp extends GameGrid
 	  if(e.getSource() == knopf)
 	  {
 	     if(Vokabelspiel.Go) {
-			  data[0] = 2;
+			 data[0] = 2;
 			 bp.sendDataBlock(data);
-			  fenster.dispose();
-			  data[0] = vgame.play();
+			 fenster.dispose();
+			 data[0] = vgame.play();
 			 bp.sendDataBlock(data);
 		  }
 		  else {
-		  data[0] = 1;
+		  data[0] = 10;
           knopf.setText("Warte auf Ready-up");
           Vokabelspiel.Go = true;
-         bp.sendDataBlock(data);
+          bp.sendDataBlock(data);
 		  }
       } 
 	  if(e.getSource() == exit) {
@@ -174,9 +174,9 @@ public class BattleshipApp extends GameGrid
   
   public boolean mouseEvent(GGMouse mouse)
   {
+	  currentLoc = toLocationInGrid(mouse.getX(), mouse.getY());
 		if (currentLoc.y < 11) {
 		    setMouseEnabled(false);
-		    currentLoc = toLocationInGrid(mouse.getX(), mouse.getY());
 		    int[] data =
 		    {
 		      currentLoc.x, currentLoc.y
@@ -273,12 +273,12 @@ public class BattleshipApp extends GameGrid
  
   public void receiveDataBlock(int[] data)
   {
-	  if(data.length == 1) {
+	  if(data.length == 1 && !Vokabelspiel.Go && data[0] == 10) {
+			  Vokabelspiel.Go = true;
+			  	getReady();
+	  }
+	  if(data.length == 1 && Vokabelspiel.Go) {
 		  switch(data[0]) {
-		  case 1:
-			Vokabelspiel.Go = true;
-		  	getReady();
-		  	break;
 		  case 2: 
 			  fenster.dispose();
 			  data[0] = vgame.play();
@@ -291,6 +291,7 @@ public class BattleshipApp extends GameGrid
 			  win.dispose();  
 			  data[0] = 4;
 			  bp.sendDataBlock(data);
+			  Vokabelspiel.Go = false;
 			  break;
 		  case 4:  
 			  StatusDialog loss = new StatusDialog(ulx, uly, true);
@@ -315,7 +316,7 @@ public class BattleshipApp extends GameGrid
 				  senden[1] = loc.y;
 			  }
 			  bp.sendDataBlock(senden);
-			  
+			  Vokabelspiel.Go = false;
 			  break;
 		  }
 	  }
@@ -324,8 +325,7 @@ public class BattleshipApp extends GameGrid
 		  Random target = new Random();
 		  int t = target.nextInt(n);
 		  ArrayList<Actor> Fleet = getActors(Ship.class);
-		  createReply(Fleet.get(0).getLocation());
-		  
+		  createReply(Fleet.get(0).getLocation());  
 	  }
 	  else 
 	  {
@@ -340,10 +340,10 @@ public class BattleshipApp extends GameGrid
 		        turns();
 		        if(turnnumber%10 != 0 && !vgameplay) {
 		        	vgameplayround = (int)Math.random()*10;
+		        	vgameplay = true;
 		        }
 		        if(turnnumber == vgameplayround) {
 		        	getReady();
-		        	vgameplay = true;
 		        }
 		        if(turnnumber % 10 == 0) {
 		        	vgameplay = false;
